@@ -8,7 +8,6 @@ description
 Generate random dataset to train and validate recommandation algorithm
 """
 
-#%%
 from urllib import request
 import os
 from zipfile import ZipFile
@@ -38,8 +37,9 @@ def convert_to_cf_data(data):
     :returns: converted data for collaborative filtering 
     '''
     
-    return data.pivot(index=user_name, columns=movie_name, values=rating_name)
-
+    converted_data = data.pivot(index=user_name, columns=movie_name, values=rating_name)
+    converted_data = converted_data.fillna(0) # Nan -> 0
+    return converted_data
 def load_MovieLens_1m_dataset():
     '''
     Load MovieLens 1m dataset
@@ -90,9 +90,8 @@ def load_MovieLens_1m_dataset():
     else:
         with open(pkl_path, mode="rb") as f:
             return pickle.load(f)
-# Test
 
-#%%
+# Test
 if __name__ == "__main__":
     features, target_values, users, movies, ratings, data = load_MovieLens_1m_dataset()
     cf_data = convert_to_cf_data(data)
