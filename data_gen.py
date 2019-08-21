@@ -38,8 +38,11 @@ def convert_to_cf_data(data):
     '''
     
     converted_data = data.pivot(index=user_name, columns=movie_name, values=rating_name)
-    converted_data = converted_data.fillna(0) # Nan -> 0
-    return converted_data
+    rated_vector = converted_data.values >= 0
+    converted_data = converted_data.fillna(0)
+    
+    return converted_data.values, rated_vector
+
 def load_MovieLens_1m_dataset():
     '''
     Load MovieLens 1m dataset
@@ -90,6 +93,23 @@ def load_MovieLens_1m_dataset():
     else:
         with open(pkl_path, mode="rb") as f:
             return pickle.load(f)
+
+def training_test_set(dataset, rated_vector, ratio=0.7):
+    num_user, num_item = dataset.shape
+
+    total_size = num_user * num_item
+    train_size = int(0.7 * total_size)
+    test_size = total_size - train_size
+    indices = np.append(np.ones(train_size), np.zeros(test_size))
+    indices = np.reshape(indices, (num_user, num_item))
+    np.random.shuffle(indices)
+
+    training_set = dataset * indices
+    test_set = dataset * np.logical_not(indices)
+
+    train_rated_vector = np.logical_and(training_set, rated_vector)
+    test_rated_vector = np.logical_and(test_set, rated_vector)
+    return (training_set, test_set, train_rated_vector, test_rated_vector)
 
 # Test
 if __name__ == "__main__":

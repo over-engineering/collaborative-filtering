@@ -2,6 +2,8 @@ import numpy as np
 from math import isnan
 import similarity
 
+import tensorflow as tf
+
 def weighted_sum(data, sim_matrix, axis = 0):
     '''
     Compute the prediction on an item i for a user u
@@ -9,6 +11,8 @@ def weighted_sum(data, sim_matrix, axis = 0):
     :param i: Set of user or item rating values
     :param sim: Set of similarity values
     :param axis: Sum direction
+
+    :returns: ratings predicted using weighted sum
     '''
 
     number_of_users = data.shape[0]
@@ -33,9 +37,6 @@ def weighted_sum(data, sim_matrix, axis = 0):
             raise "Invalid Value"
 
     return output
-
-def linear_regression():
-    return 0
 
 def prediction(input_data, target="item", method="weighted_sum"):
     '''

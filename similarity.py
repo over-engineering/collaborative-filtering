@@ -1,5 +1,6 @@
 import numpy as np
 from math import sqrt, isnan
+from multiprocessing import Pool
 
 def pearson_correlation(i, j, exclude = False):
     '''
@@ -54,10 +55,19 @@ def adjusted_cosine_similarity(i, j, mean_U, exclude=False):
 
     return numerator / denominator
 
-def get_similarity_matrix(data, target="item"):
+def worker_user(output, data, i, j):
+    output[i][j] = pearson_correlation(data[i, :], data[j, :], True)
+
+def worker_item(output, data, i, j, mean_U):
+    output[i][j] = adjusted_cosine_similarity(data[:, i], data[:, j], mean_U, True)
+
+def get_similarity_matrix(data, target="item", numbuer_of_process = 20):
+    pool = Pool(numbuer_of_process)
+
     number_of_users = data.shape[0]
     number_of_items = data.shape[1]
     if target == "user":
+        output = np.zeros((number_of_users, number_of_users))
         return np.array([pearson_correlation(data[i, :], data[j, :], True) for j in range(0, number_of_users) for i in range(0, number_of_users)]).reshape(number_of_users, number_of_users)
     elif target == "item":
         mean_U = np.mean(data, axis=1)
