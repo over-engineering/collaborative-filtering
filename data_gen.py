@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import pickle # Module to save non-text structured data
 import utils
+from sklearn.model_selection import train_test_split
 
 path = os.path.join(os.getcwd(), "dataset")
 movielens_path = os.path.join(path, "movielens")
@@ -73,11 +74,8 @@ def load_MovieLens_1m_dataset(target="cf"):
         
         # Preprocessing
 
-        # Remove unnecessary data
-        ratings = ratings.filter(regex='userId|movieId|rating')
-
         # Merge data
-        data = pd.merge(pd.merge(ratings, users), movies)
+        data = pd.merge(pd.merge(ratings.filter(regex='userId|movieId|rating'), users), movies)
 
         # Separate features and rating values
         features = data.drop([rating_name], axis = 1).values # drop rating column
@@ -94,6 +92,8 @@ def load_MovieLens_1m_dataset(target="cf"):
 
     if target is "cf":
         return convert_to_cf_data(dataset[5])
+    else:
+        return dataset
 
 def training_test_set(dataset, rated_vector, ratio=0.7):
     num_user, num_item = dataset.shape
@@ -119,8 +119,59 @@ def training_test_set(dataset, rated_vector, ratio=0.7):
 
     return (num_user, num_item, training_set, test_set, training_indices, test_indices)
 
-# Test
-if __name__ == "__main__":
-    features, target_values, users, movies, ratings, data = load_MovieLens_1m_dataset()
-    cf_data = convert_to_cf_data(data)
-    print(cf_data.shape)
+
+def load_MovieLens_1m_dataset_v2(target="cf", split=0.7):
+    '''
+    Load MovieLens 1m dataset
+
+    :returns: users, movies, ratings, data
+    '''
+    
+    dataset_name = "ml-1m"
+    data_path = os.path.join(movielens_path, dataset_name)
+    pkl_path = os.path.join(data_path, "%s_v2.pkl" % dataset_name)
+    dataset = None
+
+    if not os.path.exists(pkl_path):
+        url = "http://files.grouplens.org/datasets/movielens/%s.zip" % dataset_name
+
+        print("Downloading MovieLens %s dataset..." % dataset_name)
+        utils.download(url, data_path + ".zip")
+        utils.unzip("%s.zip" % data_path, movielens_path)
+        
+        # Read data
+        user_names = [user_name, "gender", "age", "occupationId", "zip-code"]
+        movie_names =  [movie_name, "Title", "Genres"]
+        rating_names = [user_name, movie_name, rating_name, "timestamp"]
+
+        users = pd.read_csv(os.path.join(data_path, "users.dat"), sep="::", header=None, names=user_names, engine="python")
+        movies = pd.read_csv(os.path.join(data_path, "movies.dat"), sep="::", header=None, names=movie_names, engine="python")
+        ratings = pd.read_csv(os.path.join(data_path, "ratings.dat"), sep="::", header=None, names=rating_names, engine="python")
+
+        dataset = (users, movies, ratings)
+
+        # Save preprocessed data
+        with open(pkl_path, "wb") as f:
+            pickle.dump(dataset, f)   
+    else:
+        with open(pkl_path, mode="rb") as f:
+            dataset = pickle.load(f)
+
+    if target is "cf":
+        return convert_to_cf_dataset_v2(dataset[2], split)
+    else:
+        return dataset
+
+
+def convert_to_cf_dataset_v2(dataset, split):
+    '''
+    Convert raw merged data to user x item rating Matrix
+
+    :param data: MovieLens merged data
+
+    :returns: converted data for collaborative filtering 
+    '''
+    num_user = len(dataset[user_name].unique())
+    num_item = len(dataset[movie_name].unique())
+    train, test = train_test_split(dataset, train_size=split)
+    return (num_user, num_item, train, test)

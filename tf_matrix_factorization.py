@@ -14,7 +14,7 @@ parser.add_argument("--global_step", type=int, default=1000)
 parser.add_argument("--dataset_path", type=str, default=os.path.join(os.getcwd(), "dataset/mf_dataset.pkl"))
 parser.add_argument("--checkpoint", type=str, default=os.path.join(os.getcwd(), "model/matrix_factorization"))
 parser.add_argument("--model_name", type=str, default="mf_model")
-parser.add_argument("--latent_factor", type=int, default=25) # 25 ~ 1000
+parser.add_argument("--latent_factor", type=int, default=100) # 25 ~ 1000
 parser.add_argument("--reg_lambda", type=float, default=0.002)
 
 args = parser.parse_args()
@@ -60,8 +60,9 @@ class MF:
         self.cost = cost = tf.add(mean_square_error, l2_error)
         optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate = learning_rate)
 
-        self.train = optimizer.minimize(cost)
+        # self.train = optimizer.minimize(cost)
         self.MAE = tf.keras.losses.MAE(Y, Y_)
+        self.train = optimizer.minimize(self.MAE)
 
         # Model save configuration
         self.saver = saver = tf.compat.v1.train.Saver()
@@ -83,10 +84,11 @@ class MF:
 
         for epoch in range(0, epochs + 1):
             if epoch % global_step == 0:
-                loss = sess.run(cost, feed_dict={Y: training_set, indices: training_indices})
+                # loss = sess.run(cost, feed_dict={Y: training_set, indices: training_indices})
                 training_error = sess.run(MAE, feed_dict={Y: training_set, indices: training_indices})
                 test_error = sess.run(MAE, feed_dict={Y: test_set, indices: test_indices})
-                print("Epoch : %d / %d, Loss : %f, MAE(training) : %f, MAE(test) : %f" % (epoch, epochs, loss, training_error, test_error))
+                # print("Epoch : %d / %d, Loss : %f, MAE(training) : %f, MAE(test) : %f" % (epoch, epochs, loss, training_error, test_error))
+                print("Epoch : %d / %d, MAE(training) : %f, MAE(test) : %f" % (epoch, epochs, training_error, test_error))
                 saver.save(sess, os.path.join(checkpoint, model_name + ".ckpt"), global_step = global_step)
             
             sess.run(train, feed_dict={Y: training_set, indices: training_indices})
