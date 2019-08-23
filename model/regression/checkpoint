@@ -1,0 +1,2 @@
+model_checkpoint_path: "c:\\Users\\sc\\Desktop\\collaborative-filtering\\model\\regression_model.ckpt-1000"
+all_model_checkpoint_paths: "c:\\Users\\sc\\Desktop\\collaborative-filtering\\model\\regression_model.ckpt-1000"

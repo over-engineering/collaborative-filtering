@@ -259,5 +259,5 @@ dmypy.json
 
 !.vscode/extensions.json
 
-dataset/
-model/
+dataset/*
+model/*

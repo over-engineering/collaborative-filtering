@@ -1,0 +1,3 @@
+model_checkpoint_path: "c:\\Users\\sc\\Desktop\\collaborative-filtering\\model/matrix_factorization/tf\\mf_model001_0.8840.ckpt"
+all_model_checkpoint_paths: "c:\\Users\\sc\\Desktop\\collaborative-filtering\\model/matrix_factorization/tf\\mf_model000_0.9345.ckpt"
+all_model_checkpoint_paths: "c:\\Users\\sc\\Desktop\\collaborative-filtering\\model/matrix_factorization/tf\\mf_model001_0.8840.ckpt"
