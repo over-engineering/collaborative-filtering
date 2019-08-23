@@ -43,21 +43,22 @@ def convert_to_cf_data(data):
     
     return converted_data.values, rated_vector
 
-def load_MovieLens_1m_dataset():
+def load_MovieLens_1m_dataset(target="cf"):
     '''
     Load MovieLens 1m dataset
 
     :returns: features, target_values, users, movies, ratings, data
     '''
     
-    dataset = "ml-1m"
-    data_path = os.path.join(movielens_path, dataset)
-    pkl_path = os.path.join(data_path, "%s.pkl" % dataset)
+    dataset_name = "ml-1m"
+    data_path = os.path.join(movielens_path, dataset_name)
+    pkl_path = os.path.join(data_path, "%s.pkl" % dataset_name)
+    dataset = None
 
     if not os.path.exists(pkl_path):
-        url = "http://files.grouplens.org/datasets/movielens/%s.zip" % dataset
+        url = "http://files.grouplens.org/datasets/movielens/%s.zip" % dataset_name
 
-        print("Downloading MovieLens %s dataset..." % dataset)
+        print("Downloading MovieLens %s dataset..." % dataset_name)
         utils.download(url, data_path + ".zip")
         utils.unzip("%s.zip" % data_path, movielens_path)
         
@@ -82,17 +83,17 @@ def load_MovieLens_1m_dataset():
         features = data.drop([rating_name], axis = 1).values # drop rating column
         target_values = data[rating_name].values
 
-        preprocessed_data = (features, target_values, users, movies, ratings, data)
+        dataset = (features, target_values, users, movies, ratings, data)
 
         # Save preprocessed data
         with open(pkl_path, "wb") as f:
-            pickle.dump(preprocessed_data, f)
-        
-        return preprocessed_data
-    
+            pickle.dump(dataset, f)   
     else:
         with open(pkl_path, mode="rb") as f:
-            return pickle.load(f)
+            dataset = pickle.load(f)
+
+    if target is "cf":
+        return convert_to_cf_data(dataset[5])
 
 def training_test_set(dataset, rated_vector, ratio=0.7):
     num_user, num_item = dataset.shape
@@ -107,9 +108,16 @@ def training_test_set(dataset, rated_vector, ratio=0.7):
     training_set = dataset * indices
     test_set = dataset * np.logical_not(indices)
 
-    train_rated_vector = np.logical_and(training_set, rated_vector)
-    test_rated_vector = np.logical_and(test_set, rated_vector)
-    return (training_set, test_set, train_rated_vector, test_rated_vector)
+    training_set_mask = np.logical_and(training_set, rated_vector)
+    test_set_mask = np.logical_and(test_set, rated_vector)
+    
+    training_indices = np.where(np.reshape(training_set_mask, -1) == True)[0]
+    test_indices = np.where(np.reshape(test_set_mask, -1) == True)[0]
+
+    training_set = training_set[training_set_mask]
+    test_set = test_set[test_set_mask]
+
+    return (num_user, num_item, training_set, test_set, training_indices, test_indices)
 
 # Test
 if __name__ == "__main__":
